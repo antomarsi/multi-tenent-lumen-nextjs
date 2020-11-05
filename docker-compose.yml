@@ -1,0 +1,50 @@
+version: '3.3'
+
+services:
+  db:
+    container_name: mysql
+    image: mysql:5.7
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lumen
+
+  nginx:
+    container_name: nginx
+    build: images/nginx
+    command: nginx -g "daemon off;"
+    tty: true
+    links:
+      - api
+    ports:
+      - '80:80'
+    depends_on:
+      - db
+  api:
+    container_name: api
+    build: images/php
+    volumes:
+      - ./api:/var/www/html
+    working_dir: /var/www/html/app/public
+    command: php-fpm
+    links:
+      - db:db
+    ports:
+      - '9000:9000'
+    depends_on:
+      - db
+  app:
+    container_name: app
+    build: images/react
+    volumes: 
+      - ./app:/usr/src
+    working_dir: /usr/src
+    tty: true
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    links:
+      - api
